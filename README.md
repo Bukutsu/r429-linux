@@ -281,6 +281,27 @@ sudo rm -rf /usr/lib/firmware/nouveau
 sudo mkinitcpio -P
 ```
 
+### 12. GPU Acceleration & Mesa GL Threading
+
+Enables asynchronous OpenGL command submission and DRI3 hardware acceleration:
+
+```bash
+# Add mesa_glthread=true to /etc/environment
+sudo tee -a /etc/environment << 'EOF'
+mesa_glthread=true
+EOF
+
+# Configure DRI3 & TearFree in Xorg
+sudo tee /etc/X11/xorg.conf.d/20-nouveau.conf << 'EOF'
+Section "Device"
+    Identifier "Nouveau GPU"
+    Driver "nouveau"
+    Option "DRI" "3"
+    Option "TearFree" "true"
+EndSection
+EOF
+```
+
 ## LightDM Tokyo Night Rice
 
 To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
