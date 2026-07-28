@@ -115,7 +115,25 @@ options nouveau config=NvClkMode=auto
 EOF
 ```
 
-Reboot or reload nouveau for it to take effect.
+The modprobe option doesn't reliably force the max pstate on all cards. If it doesn't stick, add a systemd service:
+
+```bash
+sudo tee /etc/systemd/system/nouveau-pstate.service << 'EOF'
+[Unit]
+Description=Force Nouveau GPU to max pstate
+After=sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'echo 0f > /sys/kernel/debug/dri/0/pstate'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl enable --now nouveau-pstate.service
+```
 
 ### 2. CPU exploit mitigations
 
@@ -180,6 +198,18 @@ Apply immediately:
 sudo sysctl vm.dirty_writeback_centisecs=6000
 ```
 
+TLP may override this on restart. To reapply after TLP starts, add a systemd drop-in:
+
+```bash
+sudo mkdir -p /etc/systemd/system/tlp.service.d
+sudo tee /etc/systemd/system/tlp.service.d/override.conf << 'EOF'
+[Service]
+ExecStartPost=/usr/bin/sysctl vm.dirty_writeback_centisecs=6000
+EOF
+sudo systemctl daemon-reload
+sudo systemctl restart tlp.service
+```
+
 ### 6. noatime mount
 
 Stops the kernel from writing access timestamps on every file read. Saves
@@ -198,12 +228,12 @@ Needs a reboot to take effect.
 
 | Tweak | Impact | Live | Needs reboot |
 |-------|--------|------|-------------|
-| GPU reclocking (625 MHz) | UI snappiness, compositing | via pstate write | For permanent config |
+| GPU reclocking (625 MHz) | UI snappiness, compositing | systemd service (on boot) | no |
 | `mitigations=off` | CPU throughput +10-20% | no | yes |
-| BFQ I/O scheduler | Desktop responsiveness | yes | Only for udev rule |
-| swappiness=150 | Memory management | yes | no |
-| writeback=60s | Fewer disk seeks | yes | no |
-| noatime | Less disk writes | no | yes |
+| BFQ I/O scheduler | Desktop responsiveness | udev rule | no |
+| swappiness=150 | Memory management | sysctl.d | no |
+| writeback=60s | Fewer disk seeks | TLP override (systemd drop-in) | no |
+| noatime | Less disk writes | fstab | yes |
 
 ---
 
@@ -220,3 +250,5 @@ Reference files in this repo mirror the installed locations:
 | `etc/sysctl.d/99-zram.conf` | `/etc/sysctl.d/99-zram.conf` |
 | `etc/sysctl.d/99-writeback.conf` | `/etc/sysctl.d/99-writeback.conf` |
 | `etc/udev/rules.d/60-ioschedulers.rules` | `/etc/udev/rules.d/60-ioschedulers.rules` |
+| `etc/systemd/system/nouveau-pstate.service` | `/etc/systemd/system/nouveau-pstate.service` |
+| `etc/systemd/system/tlp.service.d/override.conf` | `/etc/systemd/system/tlp.service.d/override.conf` |

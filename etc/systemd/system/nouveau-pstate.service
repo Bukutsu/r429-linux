@@ -1,0 +1,11 @@
+[Unit]
+Description=Force Nouveau GPU to max pstate
+After=sysinit.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'echo 0f > /sys/kernel/debug/dri/0/pstate'
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
