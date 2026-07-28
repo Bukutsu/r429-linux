@@ -302,6 +302,18 @@ EndSection
 EOF
 ```
 
+### 13. Threaded IRQs & Nouveau Boost Parameters
+
+Appends `threadirqs` (offloading hardware interrupts to priority-controlled threads to eliminate UI stutters under heavy disk load) and `nouveau.config=NvBoost=2,NvPmEnableGating=1` (requesting GPU boost clocks & hardware power gating):
+
+```bash
+# Add to GRUB_CMDLINE_LINUX_DEFAULT in /etc/default/grub:
+GRUB_CMDLINE_LINUX_DEFAULT="mitigations=off button.lid_init_state=open threadirqs nouveau.config=NvBoost=2,NvPmEnableGating=1 loglevel=3 quiet"
+
+# Regenerate:
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
 ## LightDM Tokyo Night Rice
 
 To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
