@@ -222,6 +222,43 @@ sudo sed -i 's/relatime/noatime/' /etc/fstab
 
 Needs a reboot to take effect.
 
+### 7. HDD Read-Ahead & Queue Depth Tuning
+
+Limits read-ahead to 512 KB (preventing massive read amplification on bad sectors) and bumps BFQ queue depth to 256 requests for smoother head movement:
+
+```bash
+sudo tee /etc/udev/rules.d/60-hdd-queue.rules << 'EOF'
+ACTION=="add|change", KERNEL=="sd[a-z]", ATTR{queue/rotational}=="1", ATTR{queue/read_ahead_kb}="512", ATTR{queue/nr_requests}="256"
+EOF
+```
+
+### 8. Low Dirty Memory Thresholds
+
+Prevents large 800 MB write stalls by forcing continuous background flushes at 3% dirty memory:
+
+```bash
+sudo tee /etc/sysctl.d/99-hdd-dirty-ratio.conf << 'EOF'
+vm.dirty_background_ratio = 3
+vm.dirty_ratio = 6
+EOF
+```
+
+### 9. Ext4 Commit Interval
+
+```bash
+# Add commit=60 to ext4 root entry in /etc/fstab:
+# UUID=... / ext4 rw,noatime,commit=60 0 1
+```
+
+### 10. Profile-Sync-Daemon (Browser in RAM)
+
+Keeps browser profiles (Firefox/Chromium) in `tmpfs` RAM and syncs periodically, cutting daily disk reads/writes by ~80%:
+
+```bash
+sudo pacman -S profile-sync-daemon
+systemctl --user enable --now psd.service
+```
+
 ## LightDM Tokyo Night Rice
 
 To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
