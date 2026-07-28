@@ -259,6 +259,28 @@ sudo pacman -S profile-sync-daemon
 systemctl --user enable --now psd.service
 ```
 
+### 11. Nouveau Hardware Video Decoding Firmware
+
+Extracts proprietary VP4 video engine firmware from NVIDIA 340.108 to enable H.264 / VC-1 / MPEG-2 hardware decoding under Nouveau:
+
+```bash
+mkdir -p /tmp/nouveau-fw-build && cd /tmp/nouveau-fw-build
+wget https://raw.githubusercontent.com/envytools/firmware/master/extract_firmware.py
+wget https://us.download.nvidia.com/XFree86/Linux-x86_64/340.108/NVIDIA-Linux-x86_64-340.108.run
+sh NVIDIA-Linux-x86_64-340.108.run --extract-only
+python3 extract_firmware.py
+sudo mkdir -p /usr/lib/firmware/nouveau
+sudo cp -a nv* vuc-* /usr/lib/firmware/nouveau/
+sudo mkinitcpio -P
+rm -rf /tmp/nouveau-fw-build
+```
+
+#### How to Revert:
+```bash
+sudo rm -rf /usr/lib/firmware/nouveau
+sudo mkinitcpio -P
+```
+
 ## LightDM Tokyo Night Rice
 
 To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
