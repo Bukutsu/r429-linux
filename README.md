@@ -1,8 +1,20 @@
-# Samsung R429 Lid Suspend Fix
+# Samsung R429 Linux
 
-If your Samsung R429 (or similar vintage Samsung laptop) won't suspend when you close the lid on Linux, it's a known ACPI firmware bug. Here's the fix.
+Tweaks, fixes, and notes for running Linux on the Samsung R429 (and similar vintage Samsung laptops).
 
-## The problem
+## Hardware
+
+| Component | Detail |
+|-----------|--------|
+| Model | Samsung R429 |
+| CPU | Intel Core i3 M 330 @ 2.13GHz |
+| GPU | NVIDIA GeForce 310M (GT218M) |
+| RAM | 4 GB |
+| OS | Arch Linux (but distro-agnostic fixes) |
+
+---
+
+## Lid suspend fix
 
 The ACPI lid switch on these laptops doesn't comply with the Linux `SW_LID` input protocol:
 
@@ -10,27 +22,25 @@ The ACPI lid switch on these laptops doesn't comply with the Linux `SW_LID` inpu
 kernel: ACPI: button: The lid device is not compliant to SW_LID.
 ```
 
-This means `systemd-logind` detects the lid event but can't act on it — the input subsystem never delivers a valid `SW_LID` state change, so lid close does nothing and the laptop never suspends.
+`systemd-logind` detects the lid event but can't act on it — the input subsystem never delivers a valid `SW_LID` state change, so lid close does nothing.
 
-## The fix
+### Fix
 
 Two changes needed:
 
-### 1. Kernel parameter: `button.lid_init_state=open`
-
-This tells the kernel to initialize the lid state as "open" at boot, avoiding a related initialization quirk.
+#### 1. Kernel parameter: `button.lid_init_state=open`
 
 ```bash
-# Edit /etc/default/grub and add to GRUB_CMDLINE_LINUX_DEFAULT:
+# Edit /etc/default/grub:
 GRUB_CMDLINE_LINUX_DEFAULT="button.lid_init_state=open quiet"
 
 # Regenerate grub config:
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
-### 2. Use `acpid` instead of the broken SW_LID input layer
+#### 2. Use `acpid` to catch the raw ACPI event
 
-Since the ACPI event itself **is** generated correctly (it just doesn't reach the input layer as a valid `SW_LID` event), we bypass the problem by catching the ACPI event directly with `acpid`.
+Since the ACPI event itself is generated correctly (it just doesn't reach the input layer), we bypass the problem:
 
 ```bash
 # Install acpid
@@ -62,15 +72,7 @@ sudo chmod +x /etc/acpi/handlers/lid.sh
 sudo systemctl enable --now acpid
 ```
 
-## Optional: passwordless sudo for suspend
-
-If the user running `acpid` needs to call `systemctl suspend` without a password prompt (acpid runs as root, so this shouldn't be necessary, but good to have):
-
-```bash
-echo '%wheel ALL=(ALL:ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/wheel-nopasswd
-```
-
-## Verification
+### Verification
 
 Close the lid and check:
 
@@ -78,7 +80,7 @@ Close the lid and check:
 journalctl -b | grep -E 'suspend|resume|PM:|acpid'
 ```
 
-You should see:
+Expected output:
 
 ```
 acpid: waiting for events
@@ -89,12 +91,14 @@ PM: Low-level resume complete
 PM: suspend exit
 ```
 
-## Hardware tested
+---
 
-| Component | Detail |
-|-----------|--------|
-| Model | Samsung R429 (or similar) |
-| CPU | Intel Core i3 M 330 @ 2.13GHz |
-| GPU | NVIDIA GeForce 310M (GT218M, nouveau driver) |
-| RAM | 4 GB |
-| Kernel | 7.1.5-arch1-1 (also tested on other distros) |
+## Config files
+
+Reference files in this repo mirror the installed locations:
+
+| Repo path | Installed to |
+|-----------|-------------|
+| `etc/acpi/events/lid` | `/etc/acpi/events/lid` |
+| `etc/acpi/handlers/lid.sh` | `/etc/acpi/handlers/lid.sh` |
+| `etc/systemd/logind.conf.d/lid-suspend.conf` | `/etc/systemd/logind.conf.d/lid-suspend.conf` |
