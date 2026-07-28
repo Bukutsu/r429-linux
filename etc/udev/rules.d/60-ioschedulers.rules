@@ -1,0 +1,3 @@
+# Use BFQ I/O scheduler for rotational drives (HDDs).
+# BFQ is designed for desktop responsiveness on mechanical disks.
+ACTION=="add|change", KERNEL=="sd[a-z]*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="bfq"
