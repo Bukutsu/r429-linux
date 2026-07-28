@@ -246,7 +246,7 @@ EOF
 ### 9. Ext4 Commit Interval
 
 ```bash
-# Add commit=60 to ext4 root entry in /etc/fstab:
+# Add commit=60 to the ext4 root entry only (vfat /boot does not support commit=60):
 # UUID=... / ext4 rw,noatime,commit=60 0 1
 ```
 
