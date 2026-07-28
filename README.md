@@ -222,6 +222,34 @@ sudo sed -i 's/relatime/noatime/' /etc/fstab
 
 Needs a reboot to take effect.
 
+## LightDM Tokyo Night Rice
+
+To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
+
+```bash
+# 1. Install lightdm-gtk-greeter
+sudo pacman -S lightdm-gtk-greeter
+
+# 2. Copy TokyoNight theme system-wide
+sudo cp -r ~/.local/share/themes/TokyoNight /usr/share/themes/
+
+# 3. Configure /etc/lightdm/lightdm.conf [Seat:*] section
+# greeter-session=lightdm-gtk-greeter
+
+# 4. Configure /etc/lightdm/lightdm-gtk-greeter.conf
+sudo tee /etc/lightdm/lightdm-gtk-greeter.conf << 'EOF'
+[greeter]
+theme-name = TokyoNight
+icon-theme-name = Papirus-Dark
+background = #16161e
+user-background = false
+font-name = Sans 10
+position = 50%,center 50%,center
+indicators = ~clock;~spacer;~session;~power
+clock-format = %a, %b %d  %H:%M
+EOF
+```
+
 ---
 
 ## Overview
