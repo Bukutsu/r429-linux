@@ -314,6 +314,30 @@ GRUB_CMDLINE_LINUX_DEFAULT="mitigations=off button.lid_init_state=open threadirq
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 ```
 
+### 14. Boot Optimization & Volatile Journal
+
+Removes network/bluetooth wait delays, removes initramfs `fsck` disk scans, and limits systemd journal size to prevent log flushing stalls on the mechanical HDD:
+
+```bash
+# Disable network online wait and unused bluetooth services at boot
+sudo systemctl disable NetworkManager-wait-online.service
+sudo systemctl disable bluetooth.service
+
+# Remove fsck from initramfs HOOKS in /etc/mkinitcpio.conf and rebuild
+# HOOKS=(base udev autodetect microcode modconf kms keyboard keymap consolefont block filesystems)
+sudo mkinitcpio -P
+
+# Limit systemd journal disk writes
+sudo mkdir -p /etc/systemd/journald.conf.d
+sudo tee /etc/systemd/journald.conf.d/00-journal-limit.conf << 'EOF'
+[Journal]
+Storage=volatile
+RuntimeMaxUse=50M
+SystemMaxUse=50M
+EOF
+sudo systemctl restart systemd-journald
+```
+
 ## LightDM Tokyo Night Rice
 
 To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
@@ -354,6 +378,7 @@ EOF
 | swappiness=150 | Memory management | sysctl.d | no |
 | writeback=60s | Fewer disk seeks | TLP override (systemd drop-in) | no |
 | noatime | Less disk writes | fstab | yes |
+| Boot optimization | Graphical target in 21.8s | systemd/journald | yes |
 
 ---
 
