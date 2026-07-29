@@ -390,6 +390,7 @@ EOF
 | swappiness=150 | Memory management | sysctl.d | no |
 | writeback=60s | Fewer disk seeks | TLP override (systemd drop-in) | no |
 | noatime | Less disk writes | fstab | yes |
+| Keyboard resume fix | PS/2 controller reset on lid open | GRUB cmdline | yes |
 | Boot optimization | Graphical target in 21.8s | systemd/journald | yes |
 
 ---
