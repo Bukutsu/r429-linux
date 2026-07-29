@@ -338,6 +338,18 @@ EOF
 sudo systemctl restart systemd-journald
 ```
 
+### 15. PS/2 Keyboard Resume Fix (`i8042.reset=1 i8042.nomux=1`)
+
+Fixes the Samsung R-series hardware bug where the PS/2 keyboard fails to re-initialize after resuming from ACPI suspend:
+
+```bash
+# Add i8042.reset=1 i8042.nomux=1 to GRUB_CMDLINE_LINUX_DEFAULT in /etc/default/grub:
+GRUB_CMDLINE_LINUX_DEFAULT="mitigations=off button.lid_init_state=open i8042.reset=1 i8042.nomux=1 threadirqs nouveau.config=NvBoost=2,NvPmEnableGating=1 loglevel=3 quiet"
+
+# Regenerate:
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+```
+
 ## LightDM Tokyo Night Rice
 
 To style the LightDM login screen with the Tokyo Night color palette and Papirus-Dark icons:
